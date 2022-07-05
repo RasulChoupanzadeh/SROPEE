@@ -45,7 +45,7 @@ Licensed under GNU GPL v.3.
 - **Reduced synthesis folder:** Implements reduced-order circuit synthesis to generate equivalent reduced-order netlist.
     * Inputs: reduced_MNA_data.npz
     * Outputs: reduced_netlist.sp 
-- **MNA_methods folder:** This folder provides a comparison between Piece-by-Piece and General MNA Approaches for Model Order Reduction of Optical multiport Networks via SAPOR/Block SAPOR Algorithms. This work is done as an additional research about the proposed approaches of creating MNA matrices, and it is not a main part of the SROPEE algorithm.
+- **MNA_Methods folder:** This folder provides a comparison between Piece-by-Piece and General MNA Approaches for Model Order Reduction of Optical multiport Networks via SAPOR/Block SAPOR Algorithms. This work is done as an additional research about the proposed approaches of creating MNA matrices, and it is not a main part of the SROPEE algorithm.
 - **Flow chart.pdf:** Provides the general flow chart of SROPEE algorithm.
 - **Instruction.pdf:** Provides fully detailed steps for executing SROPEE algorithm. 
 
