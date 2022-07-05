@@ -1,18 +1,17 @@
 
-""" Run_main_full_synthesis.py     => This program:
-                                    - Creates a network for a given S-parameter
-                                    - Enforces the reciprocity of created network
-                                    - Fits the Y-parameters of network using vector fitting algorithm
-                                    - Genrates fitted network for comparison with original network
-                                    - Generates a netlist for equivalent full-order network 
-                                    - Loads the simulated results of generated full-order netlist from Keysight ADS software for verification of generated netlist
+""" Run_full_synthesis.py     => This program is the main program of full synthesis part of SROPEE. In sum, it:
+                                    - Creates a network (with the help of scikit-rf) for a given S-parameter
+                                    - Enforces the reciprocity of created network by symmetrizing S-parameter matrix
+                                    - Fits the Y-parameters of reciprocated network using vector fitting algorithm
+                                    - Genrates a fitted network for comparison of fitted results with the results of original network
+                                    - Generates a netlist representing equivalent circuit of full-order network 
                                     
 
 Author: Rasul Choupanzadeh 
-Date: 06/28/2022
+Date: 07/03/2022
 
 
-This program uses vectfit.py, create_netlist.py, and Load_ADS_full.py programs, which are based on the concepts from [1-9].
+This program uses vectfit.py and create_netlist.py program files, which are based on the concepts from [1-9].
 
  [1] B. Gustavsen and A. Semlyen, "Rational approximation of frequency domain responses
      by Vector Fitting", IEEE Trans. Power Delivery, vol. 14, no. 3, pp. 1052-1061, July 1999.
@@ -43,9 +42,9 @@ This program uses vectfit.py, create_netlist.py, and Load_ADS_full.py programs, 
 """
 
 
-## Input: "te_rough_example.s4p" file,  Num_pole_pairs, m,n           Output: poles, residues, "full_netlist.sp" file, RMSE of fitted and actual network
+## Input: Input_file_name and Num_pole_pairs from input_variables.npy           Output: poles, residues, "full_netlist.sp" file, RMSE of fitted and actual network, comparison figures (network parameters) of actual and fitted network
 
-
+import os
 
 import vectfit
 import numpy as np
@@ -57,7 +56,6 @@ from create_netlist import create_netlist_file
 
 import skrf as rf
 from skrf import Network, Frequency
-
 
 
 def scattering_from_admittance(Y, z0):
@@ -93,8 +91,30 @@ def create_upper_matrix(values, size):
     return(upper)
 
 
+
+# Where to save the figures
+PROJECT_ROOT_DIR = "./Output/"
+CHAPTER_ID = "Full_synthesis"
+IMAGES_PATH = os.path.join(PROJECT_ROOT_DIR, "figures", CHAPTER_ID)
+os.makedirs(IMAGES_PATH, exist_ok=True)
+
+
+def save_fig(fig_id, tight_layout=True, fig_extension="pdf", resolution=300):
+    path = os.path.join(IMAGES_PATH, fig_id + "." + fig_extension)
+    print("Saving figure", fig_id)
+    if tight_layout:
+        plt.tight_layout()
+    plt.savefig(path, format=fig_extension, dpi=resolution)
+    
+
 #---------------------------------------------------------Load the origianl network results and enforce reciprocity--------------------------------------------------- 
-TL = Network('te_rough_example.s4p')
+Input_file_name = np.load('./Output/input_variables.npy')[0]
+Num_pole_pairs = int(np.load('./Output/input_variables.npy')[1])
+
+print('\n********************************* Starting part one (Full synthesis) *********************************\n')
+
+input_full_synthesis = './Input/'+ Input_file_name
+TL = Network(input_full_synthesis)
 S_par_original = TL.s.copy()
 
 # creating frequency matrix    
@@ -144,30 +164,17 @@ for f in range(len(freq)):
 test_s = 1j*2*np.pi*freq
 test_f = Y_stack.copy()
 
-Num_pole_pairs = 100
-
 # Find the fitted poles and residues
 poles = np.zeros(shape=(Num_subckt,2*Num_pole_pairs), dtype='complex')    
 residues = np.zeros(shape=(Num_subckt,2*Num_pole_pairs), dtype='complex')    
 for i in range(Num_subckt):
     poles[i,:], residues[i,:] = vectfit.vectfit_auto_rescale(test_f[i,:], test_s, n_poles=Num_pole_pairs)             # Note: n_poles = each pair of complex-conjugate poles are counted as one 
 
-    
+
 fitted = np.zeros(shape=(Num_subckt,len(test_s)), dtype='complex')    
 for i in range(0,Num_subckt):
     fitted[i,:] = vectfit.model(test_s, poles[i,:], residues[i,:])
 
-
-## This part is for visualization of errors, and disabled in final version
-#for i in range(Num_subckt):
-    #figure()
-    #plt.plot(freq, np.angle(test_f[i,:]), label="Accurate_Y" , c="blue", linestyle='solid')
-    #plt.plot(freq, np.angle(fitted[i,:]), label="Fitted_Y ", c="red", linestyle=(0,(5, 5)))
-    #plt.legend(loc='upper left')
-    #plt.xlim([freq[0],freq[-1]])
-    #plt.xlabel('Frequency (THz)')
-    #plt.ylabel('$ Magnitude $')
-    #plt.grid(color = 'green', linestyle = '--', linewidth = 0.5)     
    
 RMSE = []
 for i in range(0,Num_subckt):
@@ -223,6 +230,8 @@ def compare_fitted_vs_actual(m, n):
     ax.legend(loc='upper right')
     ax2.legend(loc='upper right')
     fig.suptitle(f"Z%d" %mn)
+    save_fig(f"Z%d" %mn)
+
     
     # Compare Y-parameters
     actual_Y =  Y_par_reciprocal[:,m-1,n-1]
@@ -245,6 +254,8 @@ def compare_fitted_vs_actual(m, n):
     ax.legend(loc='upper right')
     ax2.legend(loc='upper right')
     fig.suptitle(f"Y%d" %mn)
+    save_fig(f"Y%d" %mn)
+
 
     # Compare S-parameters
     actual_S =  S_par_reciprocal[:,m-1,n-1]
@@ -268,54 +279,19 @@ def compare_fitted_vs_actual(m, n):
     ax.legend(loc='upper right')
     ax2.legend(loc='upper right')
     fig.suptitle(f"S%d" %mn)
+    save_fig(f"S%d" %mn)
 
-# m and n are the parameters for comparison of desired network parameters 
-m = 1
-n = 1
-compare_fitted_vs_actual(m,n)
-plt.show()
+
+# Comparison plots 
+for m in range(1,p+1):
+    for n in range(m,p+1):
+        compare_fitted_vs_actual(m,n)
+        plt.close('all')
+      
 
 
 #-----------------------------------------------------------------------Genrate netlist------------------------------------------------------------------ 
 create_netlist_file(poles, residues, number_of_ports)
 
 
-#------------------------------------------------------------Load equivalent network results from ADS---------------------------------------------------- 
-
-## The following part is for verification of generated netlist; by comparing the simulation results of netlist in ADS software and original S-parameters, and is disabled in final version
-
-#exec(open("Load_ADS_full.py").read())
-
-#freq_ADS = frequency
-
-#def compare_ADS_vs_actual(m, n):
-    #mn = m*10+n
-    ## Compare S-parameters
-    #actual_S =  S_par_reciprocal[:,m-1,n-1]
-    #ADS_S = S_ADS[:,m-1,n-1]
-    
-    #fig = plt.figure(figsize=(12, 6))
-    #ax = fig.add_subplot(121)
-    #ax2 = fig.add_subplot(122)
-    #ax.set_title('Magnitude')
-    #ax.plot(freq/1e12, np.absolute(actual_S), color='blue', label='Actual', linestyle='solid')
-    #ax.plot(freq_ADS/1e12, np.absolute(ADS_S), color='red', label='ADS', linestyle=(0,(5, 5)))
-    #ax2.set_title('Phase (deg)')
-    #ax2.plot(freq/1e12, np.angle(actual_S)*180/np.pi, color='blue', label='Actual', linestyle='solid')
-    #ax2.plot(freq_ADS/1e12, np.angle(ADS_S)*180/np.pi, color='red', label='ADS', linestyle=(0,(5,5)))
-    #ax2.set_xlim([min(freq[0],freq_ADS[0])/1e12,max(freq[-1],freq_ADS[-1])/1e12])
-    #ax.set_xlim([min(freq[0],freq_ADS[0])/1e12,max(freq[-1],freq_ADS[-1])/1e12])
-    #ax.set_xlabel('Frequency (THz)')
-    #ax2.set_xlabel('Frequency (THz)')
-    #ax.grid(color = 'green', linestyle = '--', linewidth = 0.5)
-    #ax2.grid(color = 'green', linestyle = '--', linewidth = 0.5)
-    #ax.legend(loc='upper right')
-    #ax2.legend(loc='upper right')
-    #fig.suptitle(f"S%d" %mn)
-
-#compare_ADS_vs_actual(m,n)
-
-#plt.show()
-
-
-
+print('\n********************************* Part one (Full synthesis) is done *********************************\n')

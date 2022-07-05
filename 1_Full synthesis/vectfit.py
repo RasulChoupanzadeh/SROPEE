@@ -1,20 +1,20 @@
 
-""" vectfit.py     => This script uses the vector fitting algorithm for fitting a given response of a network.
+""" vectfit.py     => This script uses vector fitting algorithm for fitting a given response of a network.
 
 Author: Rasul Choupanzadeh 
-Date: 06/28/2022
+Date: 07/03/2022
 
 Acknowledgement: This script is a duplication of the vector fitting algorithm 
                  in Python (https://github.com/PhilReinhold/vectfit_python), which 
                  is written based on the original vector fitting algorithm written by
-                 Bjorn Gustavsen in MATLAB (http://www.sintef.no/Projectweb/VECTFIT/). We 
+                 Bjorn Gustavsen in MATLAB (http://www.sintef.no/Projectweb/VECTFIT/). I 
                  added few modifications to the original Python program written by Phil Reinhold.
                  All credits go to "Phil Reinhold" and "Bjorn Gustavsen" for their Python 
                  and MATLAB implementations, respectively, and the following papers.
                  
 Modifications: 
   1. The offset (d) and slope (h) coefficients are removed from all functions.
-  2. The shape of matrices A and X are changed.  
+  2. The shape of matrices A and X are changed due to the elimination of d and h.  
  
 
 

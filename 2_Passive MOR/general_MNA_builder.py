@@ -1,14 +1,14 @@
 
-""" general_MNA_builder.py
+""" general_MNA_builder.py      => This script generates general MNA matrices from the given circuit parameters.
 
 Author: Rasul Choupanzadeh
-Date: 06/28/2022
+Date: 07/03/2022
 
 
 This code is based on the concepts from [1-2].
 
 [1] Chung-Wen Ho, A. Ruehli, and P. Brennan. The modified nodal approach to
-    network analysis. IEEE Transactions on Circuits and Systems, 22(6):504-509, 1975.
+    network analysis. IEEE Transactions on Circuits and Systems, 22(6):504_509, 1975.
     
 [2] S. Grivet-Talocia and B. Gustavsen. Passive Macromodeling: Theory and Applications, 1st edition. John Wiley & Sons, 2015.
 

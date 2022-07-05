@@ -1,8 +1,8 @@
 
-""" create_netlist.py     => This script creates a netlist for a multiport network using the input pole/residues fitted network generated from Run_main.py
+""" create_netlist.py     => This script creates a netlist for a multiport network using the input pole/residues fitted network generated from Run_full_synthesis.py
 
 Author: Rasul Choupanzadeh 
-Date: 06/28/2022
+Date: 07/03/2022
 
 Acknowledgement: This script is a duplication of "create_netlist" program with few 
                  modifications and corrections added by author to the original script 
@@ -12,17 +12,17 @@ Acknowledgement: This script is a duplication of "create_netlist" program with f
 Modifications: 
   1. Used numpy.count_nonzero instead of scipy.count_nonzero in "reduce_poles" function in Jennifer's program.  Note: scipy.count_nonzero is deprecated and will be removed in SciPy 2.0.0.
   2. Corrected the Rbbr formula by adding a " - " sign in Rbbr formula in "create_imag_netlist_branch" function. 
-  3. Since Run_main_full_synthesis.py program uses vector fitting algorithm with non-common poles, and the original program of "create_netlist" is written for vector fitting with common poles, we did some modifications in "create_netlist_file" function.
+  3. Since Run_full_synthesis.py program uses vector fitting algorithm with non-common poles, and the original program of "create_netlist" is written for vector fitting with common poles, we did some modifications in "create_netlist_file" function.
 
 
 [1]  A. Zadehgol, "A semi-analytic and cellular approach to rational system characterization through
-equivalent circuits", Wiley IJNM, 2015. [Online]. https://doi.org/10.1002/jnm.2119
+     equivalent circuits", Wiley IJNM, 2015. [Online]. https://doi.org/10.1002/jnm.2119
 
 [2]  V. Avula and A. Zadehgol, "A Novel Method for Equivalent Circuit Synthesis from Frequency Response of Multi-port
-Networks", EMC EUR, pp. 79-84, 2016. [Online]. Available: ://WOS:000392194100012.
+     Networks", EMC EUR, pp. 79-84, 2016. [Online]. Available: ://WOS:000392194100012.
 
 [3]  R. Choupanzadeh and A. Zadehgol. Stability, causality, and passivity analysis of canonical equivalent 
-circuits of improper rational transfer functions with real poles and residues. IEEE Access, vol.8, pp. 125149-125162, 2020.
+     circuits of improper rational transfer functions with real poles and residues. IEEE Access, vol.8, pp. 125149-125162, 2020.
 
 [4]  https://github.com/JenniferEHoule/Circuit_Synthesis
 
@@ -81,7 +81,7 @@ def create_netlist_branch(pole, residue, port_a, port_b, branch_number, netlist_
 
 
 
-def create_netlist_file(poles, residues, number_of_ports, out_file_path='full_netlist.sp'):
+def create_netlist_file(poles, residues, number_of_ports, out_file_path='./Output/full_netlist.sp'):
     outfile = Path(out_file_path)
     with outfile.open('w') as netlist_file:
         print(f"* netlist generated with vector fitting poles and residues\n", file=netlist_file)

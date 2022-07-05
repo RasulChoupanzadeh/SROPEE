@@ -2,7 +2,7 @@
 """ Load_netlist.py      => This script loads the netlist of original full-order network which is reported as "netlist.sp" file.
 
 Author: Rasul Choupanzadeh
-Date: 06/28/2022
+Date: 07/03/2022
 
 """
 
@@ -13,7 +13,7 @@ Date: 06/28/2022
 import numpy as np
 
 # Load and read the netlist line by line    
-netlist = open('full_netlist.sp').readlines()                
+netlist = open('./Output/full_netlist.sp').readlines()                
 
 # calculate the number of sub-circuits and ports
 Num_sbck = 0;
@@ -24,7 +24,7 @@ for i in range(len(netlist)):
         Num_port = int(netlist[i][2])
     if netlist[i][0:4]=='.sub':
         sbck_ident.append(i)        
-del sbck_ident[0]                       ## to delete a row from list==> del matrix[i,:]          to delete a row from a numpy array==> np.delete(array name, row/column number, axis=0/1 for row/column)
+del sbck_ident[0]                       ## to delete a row from list==> del matrix[i,:] ,  to delete a row from a numpy array==> np.delete(array name, row/column number, axis=0/1 for row/column)
 sbck_ident.append(len(netlist))
 
 

@@ -1,13 +1,13 @@
 
-""" Load_equiv_circuit_results.py      => This script Loads the results of equivalent network simulated in Keysight ADS software which is exported as "reduced_voltages.cti" file
+""" Load_equiv_circuit_results.py      => This script Loads the results of equivalent reduced-order network simulated in Keysight ADS software which is exported as "reduced_voltages_ADS.cti" file
 
 Author: Rasul Choupanzadeh
-Date: 06/28/2022
+Date: 07/03/2022
 
 """
 
  
-## Input: n, Q, and "reduced_voltages.cti" file           Output: V_equiv
+## Input: n, Q, and "reduced_voltages_ADS.cti" file           Output: V_equiv
  
 
 import numpy as np
@@ -15,7 +15,7 @@ import numpy as np
 def Load_equiv_circuit_results(n,Q):
     
     # Load and read the netlist line by line 
-    equiv_results = open('reduced_voltages.cti').readlines() 
+    equiv_results = open('./Output/reduced_voltages_ADS.cti').readlines() 
     equiv_shape = np.shape(equiv_results)
     
     # Find the number of frequency points

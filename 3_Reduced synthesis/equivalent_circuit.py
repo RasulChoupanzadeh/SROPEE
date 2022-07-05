@@ -1,8 +1,8 @@
 
-""" equivalent_circuit.py      => This script calculates parameters of equivalent circuit for reduced-order system, then, generates the netlist as "reduced_netlist.sp"
+""" equivalent_circuit.py      => This script calculates parameters of equivalent circuit for reduced-order system, then, generates the reduced-order netlist as "reduced_netlist.sp"
 
 Author: Rasul Choupanzadeh
-Date: 06/28/2022
+Date: 07/03/2022
 
 """
 
@@ -34,7 +34,7 @@ L = Leq[np.triu_indices(n)]
 C = Ceq[np.triu_indices(n)]
 
 # Writing the names and values in equivalent netlist file----------------------------------
-with open('reduced_netlist.sp', 'w') as f:
+with open('./Output/reduced_netlist.sp', 'w') as f:
     f.write('* netlist generated with reverse MNA (number of voltage nodes: n = ' + str(n) + ' )\n\n')
     f.write('.subckt equivalent_circuit\n\n')
     

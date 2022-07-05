@@ -1,19 +1,19 @@
 
-""" Block_SAPOR.py
+""" Block_SAPOR.py    => This script implements the Block SAPOR algorithm ( a model order reduction technique), and provides the reduced MNA matrices.
 
 Author: Rasul Choupanzadeh
-Date: 06/28/2022
+Date: 07/03/2022
 
 
 This code is based on the concepts from [1-2].
 
 [1] Yangfeng Su, Jian Wang, Xuan Zeng, Zhaojun Bai, C. Chiang, and D. Zhou.
     SAPOR: second-order arnoldi method for passive order reduction of RCS circuits.
-    In IEEE/ACM International Conference on Computer Aided Design (ICCAD), pp. 74–79, 2004.
+    In IEEE/ACM International Conference on Computer Aided Design (ICCAD), pages 74–79, 2004.
     
 [2] Bang Liu, Xuan Zeng, Yangfeng Su, Jun Tao, Zhaojun Bai, C. Chiang, and Dian Zhou.
     Block SAPOR: block second-order arnoldi method for passive order reduction of multi-input multi-output 
-    RCS interconnect circuits. In Proceedings of Asia and South Pacific Design Automation Conference (ASP-DAC), pp. 244–249, 2005.
+    RCS interconnect circuits. In Proceedings of Asia and South Pacific Design Automation Conference (ASP-DAC), pages 244–249, 2005.
     
 """
 
@@ -25,7 +25,6 @@ import numpy as np
 from SOrth import SOrth
 
 # Prepating input matrices
-start = time.time()
 D = 2*s0*Cm + Gm;
 K = (s0**2)*Cm + s0*Gm + Gamma                          
 B0 = s0*Bm
@@ -58,13 +57,5 @@ Gammar = np.transpose(Q) @ Gamma @ Q
 Bmr = np.transpose(Q) @ Bm
 Lvr = np.transpose(Q) @ Lv 
 
-# Calculating frequency response
-V_reduced = np.zeros(shape=(q,len(freq)), dtype = 'complex')   
-nt=0
-for f in freq:
-    s = 1j*2*np.pi*f*Coef
-    V = np.transpose(Lvr) @ np.linalg.inv(s*Cmr + Gmr + Gammar/s) @ Bmr @ Jm
-    V_reduced[:,nt] = V[:,0]
-    nt = nt+1
 
-end = time.time()
+
