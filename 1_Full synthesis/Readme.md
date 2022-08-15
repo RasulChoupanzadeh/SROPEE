@@ -118,11 +118,9 @@ Libraries used in Python:
      
 [6] Simon De Ridder, GitHub. Feb 08, 2019. Accessed on: August 10, 2022, [Online].https://github.com/SimonDeRidder/pyVF
 
-[7] E. Medina, A. Ramirez, J. Morales and K. Sheshyekani, "Passivity Enforcement of FDNEs via Perturbation of Singularity Test Matrix," in IEEE Transactions on Power Delivery,
-    vol. 35, no. 4, pp. 1648-1655, Aug. 2020, doi: 10.1109/TPWRD.2019.2949216.
+[7] E. Medina, A. Ramirez, J. Morales and K. Sheshyekani, "Passivity Enforcement of FDNEs via Perturbation of Singularity Test Matrix," in IEEE Transactions on Power Delivery, vol. 35, no. 4, pp. 1648-1655, Aug. 2020, doi: 10.1109/TPWRD.2019.2949216.
 
 [8] Totorica, Nathan, GitHub, May 5, 2021. Accessed on: August 10, 2022, [Online]. Available:https://github.com/ntotorica/SMP_Passivity_Enforcement
-
 
 [9] A. Zadehgol, "A semi-analytic and cellular approach to rational system characterization through equivalent circuits", Wiley IJNM, 2015. [Online]. https://doi.org/10.1002/jnm.2119
 
@@ -131,7 +129,6 @@ Libraries used in Python:
 [11] R. Choupanzadeh and A. Zadehgol. Stability, causality, and passivity analysis of canonical equivalent circuits of improper rational transfer functions with real poles and residues. IEEE Access, vol.8, pp. 125149-125162, 2020.
 
 [12] Houle, Jennifer, GitHub. May 10, 2020. Accessed on: February 3, 2021, [Online]. Available: https://github.com/jenniferEhoule/circuit_synthesis
-
 
 [13] http://scikit-rf.org
 
