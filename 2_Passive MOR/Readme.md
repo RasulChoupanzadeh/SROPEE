@@ -1,6 +1,6 @@
 # Passive Model Order Reduction (MOR) part of SROPEE algorithm
 ### Author: Rasul Choupanzadeh
-### Date: 07/03/2022
+### Date: 08/15/2022
 
 # Acknowledgement
 This project is completed as part of research conducted with my major professor and advisor, Prof. Ata Zadehgol, in the Applied Computational Electromagnetics and Signal/Power Integrity (ACEM-SPI) Lab while working toward the Ph.D. in Electrical Engineering at the University of Idaho, Moscow, Idaho, USA. 
@@ -37,8 +37,8 @@ Licensed under GNU GPL v.3.
 ## Primary Program Files:
 - **full_netlist.sp:** Input SPICE netlist file of optical interconnect extracted from Full synthesis part of SROPEE. (note: this file in located in the folder: .\SROPEE\Output, and may be replaced by other multiport network's netlist generated from Full synthesis part of SROPEE or circuit simulators such as SPICE and Keysight ADS).
 - **Load_netlist.py:** Loads the SPICE netlist file, and then: 
-    * Calculates the number of ports, sub-circuits, and branches
-    * Stores the values of circuit elements (Ra, L, Rb, and C) in the corresponding arrays
+    * Calculates the number of ports, sub-circuits, and branches.
+    * Stores the values of circuit elements (Ra, L, Rb, and C, Rd) in corresponding arrays.
 - **general_MNA_builder.py:** Performs the MNA algorithm through General MNA approach.
 - **Block_SAPOR.py:** Implements model order reduction, calculates projection matrix using Block SAPOR algorithm, performs analysis of reduced-order system, and calculates reduced-order MNA matrices.    
 - **SOrth.py:** A subfunction used for calculation of projection matrix.  
@@ -56,7 +56,7 @@ This program is a part of SROPEE algorithm, and will be executed auromatically b
     * fmax: Scalar value of maximum frequency point
     * fstep: Scalar value of frequency step
 - **n:** Scalar value for order of redution (note: this input is loaded from input_variables.npy, which is located in the folder: .\SROPEE\Output)
-- **s0:** Selected frequency expansion point in operating frequency range (note: this input variable is fixed as the central frequency point, and may be changed depending on user preference)
+- **s0:** Selected frequency expansion point in operating frequency range (note: this input variable be changed depending on user preference and frequency response of network)
 - **Coef:** Scalar value for normalization of frequencies (note: this input variable is fixed in THz for optical interconnects of SROPEE algorithm, and may be changed depending on the operating frequency range)
 
     

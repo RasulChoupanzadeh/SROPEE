@@ -1,17 +1,18 @@
 
-""" Run_full_synthesis.py     => This program is the main program of full synthesis part of SROPEE. In sum, it:
+""" Run_full_synthesis.py     => This program is the main program of Full Synthesis part of SROPEE. In sum, it:
                                     - Creates a network (with the help of scikit-rf) for a given S-parameter
                                     - Enforces the reciprocity of created network by symmetrizing S-parameter matrix
                                     - Fits the Y-parameters of reciprocated network using vector fitting algorithm
                                     - Genrates a fitted network for comparison of fitted results with the results of original network
+                                    - Assess/Enforce the passivity using singular test matrix 
                                     - Generates a netlist representing equivalent circuit of full-order network 
                                     
 
 Author: Rasul Choupanzadeh 
-Date: 07/03/2022
+Date: 08/10/2022
 
 
-This program uses vectfit.py and create_netlist.py program files, which are based on the concepts from [1-9].
+This program uses vectfit3.py and create_netlist.py program files, which are based on the concepts from [1-11].
 
  [1] B. Gustavsen and A. Semlyen, "Rational approximation of frequency domain responses
      by Vector Fitting", IEEE Trans. Power Delivery, vol. 14, no. 3, pp. 1052-1061, July 1999.
@@ -32,11 +33,20 @@ This program uses vectfit.py and create_netlist.py program files, which are base
  [6] R. Choupanzadeh and A. Zadehgol. "Stability, causality, and passivity analysis of canonical equivalent 
       circuits of improper rational transfer functions with real poles and residues", IEEE Access, vol.8, pp. 125149-125162, 2020.
       
- [7] https://github.com/PhilReinhold/vectfit_python   
+ [7] Simon De Ridder, GitHub. Feb 08, 2019. Accessed on: August 10, 2022, [Online].https://github.com/SimonDeRidder/pyVF  
 
- [8] https://github.com/JenniferEHoule/Circuit_Synthesis
+
+ [8] Houle, Jennifer, GitHub. May 10, 2020. Accessed on: August 11, 2022, [Online]. https://github.com/JenniferEHoule/Circuit_Synthesis
+
+
+ [9] Totorica, Nathan, GitHub, May 5, 2021. Accessed on: August 10, 2022, [Online]. Available:https://github.com/ntotorica/SMP_Passivity_Enforcement
  
- [9] http://scikit-rf.org
+ 
+ [10] E. Medina, A. Ramirez, J. Morales and K. Sheshyekani, "Passivity Enforcement of FDNEs via Perturbation of Singularity Test Matrix," in IEEE Transactions on Power Delivery,
+    vol. 35, no. 4, pp. 1648-1655, Aug. 2020, doi: 10.1109/TPWRD.2019.2949216.
+
+ 
+ [11] http://scikit-rf.org
 
 
 """
@@ -46,16 +56,18 @@ This program uses vectfit.py and create_netlist.py program files, which are base
 
 import os
 
-import vectfit
 import numpy as np
-from pylab import *
+nax = np.newaxis
+from vectfit3 import vectfit3, tri2full, ss2pr
+from time import time
 import matplotlib.pyplot as plt
-from sklearn.metrics import mean_squared_error
+from pylab import *
 from math import sqrt
+from eig_plot import plot
 from create_netlist import create_netlist_file
-
+from SMP import SMP
 import skrf as rf
-from skrf import Network, Frequency
+
 
 
 def scattering_from_admittance(Y, z0):
@@ -91,119 +103,206 @@ def create_upper_matrix(values, size):
     return(upper)
 
 
+def convert_y_to_y_prime(y):
+    number_of_ports = y.shape[1]
+    y_prime = np.zeros(shape=y.shape, dtype='complex')
+    for port_1 in range(0, number_of_ports):
+        for port_2 in range(0, number_of_ports):
+            if port_1 == port_2:
+                y_prime[:, port_1, port_2] = np.sum(y[:, port_1, :], axis=1)
+            else:
+                y_prime[:, port_1, port_2] = -y[:, port_1, port_2].copy()
+    return y_prime
+
 
 # Where to save the figures
 PROJECT_ROOT_DIR = "./Output/"
 CHAPTER_ID = "Full_synthesis"
-IMAGES_PATH = os.path.join(PROJECT_ROOT_DIR, "figures", CHAPTER_ID)
-os.makedirs(IMAGES_PATH, exist_ok=True)
+SECTION_ID1 = "1_Vector Fitting"
+SECTION_ID2 = "2_Passivity Enforcement"
+IMAGES_PATH1 = os.path.join(PROJECT_ROOT_DIR, "figures", CHAPTER_ID,SECTION_ID1)
+IMAGES_PATH2 = os.path.join(PROJECT_ROOT_DIR, "figures", CHAPTER_ID,SECTION_ID2)
+os.makedirs(IMAGES_PATH1, exist_ok=True)
+os.makedirs(IMAGES_PATH2, exist_ok=True)
 
 
-def save_fig(fig_id, tight_layout=True, fig_extension="pdf", resolution=300):
-    path = os.path.join(IMAGES_PATH, fig_id + "." + fig_extension)
-    print("Saving figure", fig_id)
+
+def save_fig_VF(fig_id, tight_layout=True, fig_extension="pdf", resolution=300):
+    path = os.path.join(IMAGES_PATH1, fig_id + "." + fig_extension)
+    print("Saving VF figure", fig_id)
     if tight_layout:
         plt.tight_layout()
     plt.savefig(path, format=fig_extension, dpi=resolution)
     
+    
+def save_fig_SMP(fig_id, tight_layout=True, fig_extension="pdf", resolution=300):
+    path = os.path.join(IMAGES_PATH2, fig_id + "." + fig_extension)
+    print("Saving Passive VF figure", fig_id)
+    if tight_layout:
+        plt.tight_layout()
+    plt.savefig(path, format=fig_extension, dpi=resolution)    
 
 #---------------------------------------------------------Load the origianl network results and enforce reciprocity--------------------------------------------------- 
 Input_file_name = np.load('./Output/input_variables.npy')[0]
-Num_pole_pairs = int(np.load('./Output/input_variables.npy')[1])
+Num_poles = int(np.load('./Output/input_variables.npy')[1])
+
 
 print('\n********************************* Starting part one (Full synthesis) *********************************\n')
 
 input_full_synthesis = './Input/'+ Input_file_name
-TL = Network(input_full_synthesis)
+TL = rf.Network(input_full_synthesis)
 S_par_original = TL.s.copy()
-
-# creating frequency matrix    
-freq_start = TL.frequency.start   
-freq_stop = TL.frequency.stop
-Num_freq = TL.frequency.npoints
-freq = np.linspace(freq_start,freq_stop,Num_freq)
-
+Y_par_original = TL.y.copy()
+freq = TL.frequency.f
+s = 2*np.pi*1j*freq
+z0 = int(TL.z0[0,0].real)
 number_of_ports = S_par_original.shape[1]
 
 
-S_par_reciprocal = TL.s.copy()
-# Enforce reciprocity 
-for f in range(len(freq)):
-    for i in range(number_of_ports):
-        for j in range(number_of_ports):
-            if j<i:
-                S_par_reciprocal[f,i,j] = S_par_reciprocal[f,j,i]
-
-
-Y_par_reciprocal = admittance_from_scattering(S_par_reciprocal, 50)
-
+# Check/Enforce reciprocity by simmetrizing S-parameters (input file)
+if S_par_original.T.all() == S_par_original.all():
+    S_par_reciprocal = S_par_original.copy()
+    Y_par_reciprocal = Y_par_original.copy()
+else:
+    S_par_reciprocal = S_par_original.copy()
+    # Enforce reciprocity 
+    for f in range(len(freq)):
+        for i in range(number_of_ports):
+            for j in range(number_of_ports):
+                if j<i:
+                    S_par_reciprocal[f,i,j] = S_par_reciprocal[f,j,i]
+    Y_par_reciprocal = admittance_from_scattering(S_par_reciprocal, z0)
+    
+bigS = S_par_reciprocal.copy()
+bigY = Y_par_reciprocal.copy()
 
 #---------------------------------------------------Prepare the reciprocal network (i.e., construct and stack y') for vectfit algorithm --------------------------------------- 
-Y_par = Y_par_reciprocal
-
-# Calculate Y', reshape and stack the Y-parameters
 p = number_of_ports
-Num_subckt = int((p*(p+1))/2)                                           # sum of first p natural numbers
-Num_freq = len(freq)
-Y_stack = np.zeros(shape=(Num_subckt, Num_freq), dtype='complex')
-for f in range(len(freq)):
-    t = Y_par[f,:,:].copy()
-    # construct y' (for futher details see [5]) and stack 
-    for i in range(p):
-        t[i,i] = np.sum(t[i,:])
-                
-    for i in range(p):
-        for j in range(p):
-            if i != j:
-                t[i,j] = -t[i,j]
+Num_subckt = int((p*(p+1))/2)                                           # Num_subckt is equal to the sum of first p natural numbers (Num_subckt= p+ p-1 + ... + 1)
 
-    Y_stack[:,f] = t[np.triu_indices(p)]                                # converts upper triangular values into a vector 
-
+# Calculate Y', reshape and stack 
+bigY_prime = convert_y_to_y_prime(bigY)
+f_stack = np.zeros(shape=(Num_subckt, len(freq)), dtype='complex')
+nt = 0
+for i in range(1,p+1):
+    for j in range(i,p+1):
+            f_stack[nt,:] = bigY_prime[:, i-1,j-1]
+            nt = nt+1
 
 #---------------------------------------------------------------------Perform vectfit algorithm----------------------------------------------------------------------- 
-test_s = 1j*2*np.pi*freq
-test_f = Y_stack.copy()
+f = f_stack.copy()
+N = Num_poles                               # order of approximation
+Ns = len(freq)
+Nc = Num_subckt
 
-# Find the fitted poles and residues
-poles = np.zeros(shape=(Num_subckt,2*Num_pole_pairs), dtype='complex')    
-residues = np.zeros(shape=(Num_subckt,2*Num_pole_pairs), dtype='complex')    
-for i in range(Num_subckt):
-    poles[i,:], residues[i,:] = vectfit.vectfit_auto_rescale(test_f[i,:], test_s, n_poles=Num_pole_pairs)             # Note: n_poles = each pair of complex-conjugate poles are counted as one 
+Niter1 = 4                                 # Fitting column sum: n.o. iterations
+Niter2 = 10                                # Fitting column: n.o. iterations
+
+weight_f = 'sqrt_abs'                      # Choose between 'unweighted', 'abs', and 'sqrt_abs' weight types for f                            Note: 'abs' is stronger inverse wieght in comparison with 'sqrt_abs'
+weight_column_sum = 'norm'                 # Choose between 'unweighted', 'norm', and 'sqrt_norm' weight types for g (column sum)             Note: 'norm' is stronger inverse wieght in comparison with 'sqrt_norm'
+
+print('Vector Fitting: \n')
+
+# Fitting options
+opts = {}
+opts['relax']     = True  # Use vector fitting with relaxed non-triviality constraint
+opts['stable']    = True  # Enforce stable poles
+opts['asymp']     = 1     # Fitting includes D  (asymp=0  fits with None, asymp=1  fits with D, asymp=2  fits with D and E)
+opts['spy1']      = False
+opts['spy2']      = False
+opts['logx']      = False
+opts['logy']      = False
+opts['errplot']   = False
+opts['phaseplot'] = False
+opts['skip_pole'] = False
+opts['skip_res']  = True
+opts['cmplx_ss']  = True  # Will generate state space model with diagonal A
+opts['legend']    = False
 
 
-fitted = np.zeros(shape=(Num_subckt,len(test_s)), dtype='complex')    
-for i in range(0,Num_subckt):
-    fitted[i,:] = vectfit.model(test_s, poles[i,:], residues[i,:])
-
-   
-RMSE = []
-for i in range(0,Num_subckt):
-    square = np.square(np.absolute(fitted[i,:]-test_f[i,:]))
-    MSE=square.mean()
-    rmse = np.sqrt(MSE)
-    RMSE.append(rmse)
+# Forming weight matrix for f:
+if weight_f == 'unweighted':
+    weight = np.ones((1,Ns))
+elif  weight_f == 'abs':
+    weight = 1 / np.abs(f)
+elif  weight_f == 'sqrt_abs':
+    weight = 1 / np.sqrt(np.abs(f))  
     
-print("Maximum RMSE of fitted (Python) and actual values = ", np.max(RMSE))
+
+# Forming (weighted) column sum:
+if weight_column_sum == 'unweighted':
+    g = np.sum(f, axis=0)[nax,:]
+elif  weight_column_sum == 'norm':
+    g = np.sum(f / np.linalg.norm(f, axis=1)[:,nax], axis=0)[nax,:]
+elif  weight_column_sum == 'sqrt_norm':
+    g = np.sum(f / np.sqrt(np.linalg.norm(f, axis=1)[:,nax]), axis=0)[nax,:]
+weight_g = 1 / np.abs(g)
 
 
-#------------------------------------------------Genrate fitted network and compare the results with original network (reciprocated)----------------------------------------- 
+# Complex starting poles:
+bet = np.linspace(s[0].imag, s[-1].imag, int(N/2))
+alf = -bet * 1.0e-2
+poles = np.concatenate(((alf-1j*bet)[:,nax],(alf+1j*bet)[:,nax]), axis=1).flatten()
+
+
+print('****Calculating improved initial poles by fitting column sum ...')
+for it in range(Niter1):
+    print('   Iter '+str(it))
+    if it==Niter1-1:
+        opts['skip_res'] = False
+        opts['spy2']     = False
+    SER,poles,rmserr,fit = vectfit3(g,s,poles,weight_g,opts)
+
+
+print('****Fitting column (i.e., f) ...')
+opts['skip_res'] = True
+opts['spy2']     = False
+for it in range(Niter2):
+    print('   Iter '+str(it))
+    if it==Niter2-1:
+        opts['skip_res'] = False
+        opts['spy2']     = False
+    SER, poles, rmserr, fit = vectfit3(f,s,poles,weight,opts)
+
+# Transforming model of lower matrix triangle into state-space model of full matrix
+SER = tri2full(SER)
+
+if opts['asymp'] == 0:
+    SER['D'] = np.zeros(shape=(p,p))
+    SER['E'] = np.zeros(shape=(p,p))
+elif opts['asymp'] == 1:
+    SER['E'] = np.zeros(shape=(p,p))
+    
+
+# Generating pole-residue model
+R,a,D,E = ss2pr(SER, tri=True)
+D = D.real
+E = E.real
+SER['R'] = R
+SER['poles'] = a
+
+print('\nEnd Vector Fitting')
+print('\nRMSE = ', rmserr)
+print('\n')
+
+#------------------------------------------------Generate fitted network and compare the results with original network ----------------------------------------- 
 # Genrate fitted network 
-Y_fit = np.zeros(shape=(len(freq),p,p), dtype='complex')
-for f in range(len(freq)):
-    u = create_upper_matrix(fitted[:,f], p)
+Y_fit = np.zeros(shape=(Ns,p,p), dtype='complex')
+for fre in range(Ns):
+    u = create_upper_matrix(fit[:,fre], p)
     l = np.triu(u,1).T
-    Y_fit[f,:,:] = u + l
+    Y_fit[fre,:,:] = u + l
     # convert from y' to y
     for i in range(p):
-        Y_fit[f,i,i] = np.sum(Y_fit[f,i,:])
+        Y_fit[fre,i,i] = np.sum(Y_fit[fre,i,:])
                 
     for i in range(p):
         for j in range(p):
             if i != j:
-                Y_fit[f,i,j] = -Y_fit[f,i,j]
+                Y_fit[fre,i,j] = -Y_fit[fre,i,j]
 
-S_par_fitted = scattering_from_admittance(Y_fit, 50)
 
+S_par_fitted = scattering_from_admittance(Y_fit, z0)
 Z_par_reciprocal = np.linalg.inv(Y_par_reciprocal)
 Z_fit = np.linalg.inv(Y_fit)
 
@@ -216,10 +315,10 @@ def compare_fitted_vs_actual(m, n):
     ax = fig.add_subplot(121)
     ax2 = fig.add_subplot(122)
     ax.set_title('Magnitude')
-    ax.plot(freq/1e12, np.absolute(actual_Z), color='blue', label='Actual', linestyle='solid')
-    ax.plot(freq/1e12, np.absolute(fitted_Z), color='red', label='Fitted', linestyle=(0,(5, 5)))
+    ax.semilogy(freq/1e12, np.absolute(actual_Z), color='blue', label='Original', linestyle='solid')
+    ax.semilogy(freq/1e12, np.absolute(fitted_Z), color='red', label='Fitted', linestyle=(0,(5, 5)))
     ax2.set_title('Phase (deg)')
-    ax2.plot(freq/1e12, np.angle(actual_Z)*180/np.pi, color='blue', label='Actual', linestyle='solid')
+    ax2.plot(freq/1e12, np.angle(actual_Z)*180/np.pi, color='blue', label='Original', linestyle='solid')
     ax2.plot(freq/1e12, np.angle(fitted_Z)*180/np.pi, color='red', label='Fitted', linestyle=(0,(5,5)))
     ax2.set_xlim([freq[0]/1e12,freq[-1]/1e12])
     ax.set_xlim([freq[0]/1e12,freq[-1]/1e12])
@@ -230,8 +329,8 @@ def compare_fitted_vs_actual(m, n):
     ax.legend(loc='upper right')
     ax2.legend(loc='upper right')
     fig.suptitle(f"Z%d" %mn)
-    save_fig(f"Z%d" %mn)
-
+    save_fig_VF(f"Z%d" %mn)
+    
     
     # Compare Y-parameters
     actual_Y =  Y_par_reciprocal[:,m-1,n-1]
@@ -240,10 +339,10 @@ def compare_fitted_vs_actual(m, n):
     ax = fig.add_subplot(121)
     ax2 = fig.add_subplot(122)
     ax.set_title('Magnitude')
-    ax.plot(freq/1e12, np.absolute(actual_Y), color='blue', label='Actual', linestyle='solid')
-    ax.plot(freq/1e12, np.absolute(fitted_Y), color='red', label='Fitted', linestyle=(0,(5, 5)))
+    ax.semilogy(freq/1e12, np.absolute(actual_Y), color='blue', label='Original', linestyle='solid')
+    ax.semilogy(freq/1e12, np.absolute(fitted_Y), color='red', label='Fitted', linestyle=(0,(5, 5)))
     ax2.set_title('Phase (deg)')
-    ax2.plot(freq/1e12, np.angle(actual_Y)*180/np.pi, color='blue', label='Actual', linestyle='solid')
+    ax2.plot(freq/1e12, np.angle(actual_Y)*180/np.pi, color='blue', label='Original', linestyle='solid')
     ax2.plot(freq/1e12, np.angle(fitted_Y)*180/np.pi, color='red', label='Fitted', linestyle=(0,(5,5)))
     ax2.set_xlim([freq[0]/1e12,freq[-1]/1e12])
     ax.set_xlim([freq[0]/1e12,freq[-1]/1e12])
@@ -254,9 +353,9 @@ def compare_fitted_vs_actual(m, n):
     ax.legend(loc='upper right')
     ax2.legend(loc='upper right')
     fig.suptitle(f"Y%d" %mn)
-    save_fig(f"Y%d" %mn)
-
-
+    save_fig_VF(f"Y%d" %mn)
+    
+    
     # Compare S-parameters
     actual_S =  S_par_reciprocal[:,m-1,n-1]
     fitted_S = S_par_fitted[:,m-1,n-1]
@@ -265,10 +364,10 @@ def compare_fitted_vs_actual(m, n):
     ax = fig.add_subplot(121)
     ax2 = fig.add_subplot(122)
     ax.set_title('Magnitude')
-    ax.plot(freq/1e12, np.absolute(actual_S), color='blue', label='Actual', linestyle='solid')
-    ax.plot(freq/1e12, np.absolute(fitted_S), color='red', label='Fitted', linestyle=(0,(5, 5)))
+    ax.semilogy(freq/1e12, np.absolute(actual_S), color='blue', label='Original', linestyle='solid')
+    ax.semilogy(freq/1e12, np.absolute(fitted_S), color='red', label='Fitted', linestyle=(0,(5, 5)))
     ax2.set_title('Phase (deg)')
-    ax2.plot(freq/1e12, np.angle(actual_S)*180/np.pi, color='blue', label='Actual', linestyle='solid')
+    ax2.plot(freq/1e12, np.angle(actual_S)*180/np.pi, color='blue', label='Original', linestyle='solid')
     ax2.plot(freq/1e12, np.angle(fitted_S)*180/np.pi, color='red', label='Fitted', linestyle=(0,(5,5)))
     ax2.set_xlim([freq[0]/1e12,freq[-1]/1e12])
     ax.set_xlim([freq[0]/1e12,freq[-1]/1e12])
@@ -279,19 +378,165 @@ def compare_fitted_vs_actual(m, n):
     ax.legend(loc='upper right')
     ax2.legend(loc='upper right')
     fig.suptitle(f"S%d" %mn)
-    save_fig(f"S%d" %mn)
-
+    save_fig_VF(f"S%d" %mn)
+        
 
 # Comparison plots 
 for m in range(1,p+1):
     for n in range(m,p+1):
         compare_fitted_vs_actual(m,n)
         plt.close('all')
-      
+
+print('\n')
+    
+#----------------------------------------------------------------Passivity assessment/enforcement-------------------------------------------------------- 
+# Plot eigenvalues before passivity enforcement    
+prev_SER = SER.copy()
+ylim1 = None
+ylim2 = None
+plot(plot_name='Original', s_pass=s.T, ylim=np.array((ylim1, ylim2)), labels=['Original'], SER1=prev_SER)
 
 
-#-----------------------------------------------------------------------Genrate netlist------------------------------------------------------------------ 
-create_netlist_file(poles, residues, number_of_ports)
+# Passivity Enforcement
+smp = SMP(plot=False)
+SMP_SER = smp.SMP_driver(SER, Niter=10, s_pass=s.T)
+
+plot(plot_name='Orig Vs. SMP', s_pass=s.T, ylim=np.array((ylim1, ylim2)), labels=['Original', 'SMP Perturbed'], SER1=prev_SER, SER2=SMP_SER)
+
+A = SMP_SER['A']
+B = SMP_SER['B']
+C = SMP_SER['C']
+D = SMP_SER['D'].real
+E = SMP_SER['E'].real
+
+poles = SMP_SER['poles']
+residues = SMP_SER['C']
+N = poles.shape[0]
+N_port = int(residues.shape[1] / N)
+poles = poles.reshape((1, -1))
+residues = residues.reshape((N_port  ** 2, N))
+
+R = residues.reshape((N_port, N_port, N))
+residues_stack = np.zeros(shape=(Num_subckt, N), dtype='complex')
+D_stack = np.zeros(Num_subckt)
+E_stack = np.zeros(Num_subckt)
+nt = 0
+for i in range(0,p):
+    for j in range(i,p):
+            residues_stack[nt,:] = R[i,j,:]
+            D_stack[nt] = D[i,j]
+            E_stack[nt] = E[i,j]
+            nt = nt+1
+
+
+Y_passive_fit = np.zeros(shape=(Ns,p,p), dtype='complex')  
+nt =0
+for s0 in s:
+    A_inv = np.linalg.inv(s0*np.eye(len(A))-A)
+    Y_passive_fit[nt,:,:] = C @ A_inv @ B + D
+    nt = nt+1
+
+# convert from y' to y
+for fre in range(Ns):
+    for i in range(p):
+        Y_passive_fit[fre,i,i] = np.sum(Y_passive_fit[fre,i,:])
+                
+    for i in range(p):
+        for j in range(p):
+            if i != j:
+                Y_passive_fit[fre,i,j] = -Y_passive_fit[fre,i,j]
+
+
+S_passive_fit = scattering_from_admittance(Y_passive_fit, z0)
+Z_passive_fit = np.linalg.inv(Y_passive_fit)
+
+def compare_passivefitted_vs_actual(m, n):
+    mn = m*10+n
+    # Compare Z-parameters
+    actual_Z =  Z_par_reciprocal[:,m-1,n-1]
+    fitted_Z = Z_passive_fit[:,m-1,n-1]
+    fig = plt.figure(figsize=(12, 6))
+    ax = fig.add_subplot(121)
+    ax2 = fig.add_subplot(122)
+    ax.set_title('Magnitude')
+    ax.semilogy(freq/1e12, np.absolute(actual_Z), color='blue', label='Original', linestyle='solid')
+    ax.semilogy(freq/1e12, np.absolute(fitted_Z), color='red', label='Fitted with Passivity Enforcement', linestyle=(0,(5, 5)))
+    ax2.set_title('Phase (deg)')
+    ax2.plot(freq/1e12, np.angle(actual_Z)*180/np.pi, color='blue', label='Original', linestyle='solid')
+    ax2.plot(freq/1e12, np.angle(fitted_Z)*180/np.pi, color='red', label='Fitted with Passivity Enforcement', linestyle=(0,(5,5)))
+    ax2.set_xlim([freq[0]/1e12,freq[-1]/1e12])
+    ax.set_xlim([freq[0]/1e12,freq[-1]/1e12])
+    ax.set_xlabel('Frequency (THz)')
+    ax2.set_xlabel('Frequency (THz)')
+    ax.grid(color = 'green', linestyle = '--', linewidth = 0.5)
+    ax2.grid(color = 'green', linestyle = '--', linewidth = 0.5)
+    ax.legend(loc='upper right')
+    ax2.legend(loc='upper right')
+    fig.suptitle(f"Z%d" %mn)
+    save_fig_SMP(f"Z%d" %mn)
+    
+    
+    # Compare Y-parameters
+    actual_Y =  Y_par_reciprocal[:,m-1,n-1]
+    fitted_Y = Y_passive_fit[:,m-1,n-1]
+    fig = plt.figure(figsize=(12, 6))
+    ax = fig.add_subplot(121)
+    ax2 = fig.add_subplot(122)
+    ax.set_title('Magnitude')
+    ax.semilogy(freq/1e12, np.absolute(actual_Y), color='blue', label='Original', linestyle='solid')
+    ax.semilogy(freq/1e12, np.absolute(fitted_Y), color='red', label='Fitted with Passivity Enforcement', linestyle=(0,(5, 5)))
+    ax2.set_title('Phase (deg)')
+    ax2.plot(freq/1e12, np.angle(actual_Y)*180/np.pi, color='blue', label='Original', linestyle='solid')
+    ax2.plot(freq/1e12, np.angle(fitted_Y)*180/np.pi, color='red', label='Fitted with Passivity Enforcement', linestyle=(0,(5,5)))
+    ax2.set_xlim([freq[0]/1e12,freq[-1]/1e12])
+    ax.set_xlim([freq[0]/1e12,freq[-1]/1e12])
+    ax.set_xlabel('Frequency (THz)')
+    ax2.set_xlabel('Frequency (THz)')
+    ax.grid(color = 'green', linestyle = '--', linewidth = 0.5)
+    ax2.grid(color = 'green', linestyle = '--', linewidth = 0.5)
+    ax.legend(loc='upper right')
+    ax2.legend(loc='upper right')
+    fig.suptitle(f"Y%d" %mn)
+    save_fig_SMP(f"Y%d" %mn)
+    
+    
+    # Compare S-parameters
+    actual_S =  S_par_reciprocal[:,m-1,n-1]
+    fitted_S = S_passive_fit[:,m-1,n-1]
+    fig = plt.figure(figsize=(12, 6))
+    ax = fig.add_subplot(121)
+    ax2 = fig.add_subplot(122)
+    ax.set_title('Magnitude')
+    ax.semilogy(freq/1e12, np.absolute(actual_S), color='blue', label='Original', linestyle='solid')
+    ax.semilogy(freq/1e12, np.absolute(fitted_S), color='red', label='Fitted with Passivity Enforcement', linestyle=(0,(5, 5)))
+    ax2.set_title('Phase (deg)')
+    ax2.plot(freq/1e12, np.angle(actual_S)*180/np.pi, color='blue', label='Original', linestyle='solid')
+    ax2.plot(freq/1e12, np.angle(fitted_S)*180/np.pi, color='red', label='Fitted with Passivity Enforcement', linestyle=(0,(5,5)))
+    ax2.set_xlim([freq[0]/1e12,freq[-1]/1e12])
+    ax.set_xlim([freq[0]/1e12,freq[-1]/1e12])
+    ax.set_xlabel('Frequency (THz)')
+    ax2.set_xlabel('Frequency (THz)')
+    ax.grid(color = 'green', linestyle = '--', linewidth = 0.5)
+    ax2.grid(color = 'green', linestyle = '--', linewidth = 0.5)
+    ax.legend(loc='upper right')
+    ax2.legend(loc='upper right')
+    fig.suptitle(f"S%d" %mn)
+    save_fig_SMP(f"S%d" %mn)
+        
+
+# Comparison plots 
+for m in range(1,p+1):
+    for n in range(m,p+1):
+        compare_passivefitted_vs_actual(m,n)
+        plt.close('all')
+
+#-----------------------------------------------------------------------Generate netlist------------------------------------------------------------------ 
+print('\nGenerating Netlist:')
+common_poles = np.zeros(shape=(Num_subckt, N), dtype='complex')
+for i in range(Num_subckt):
+    common_poles[i,:] = poles
+    
+create_netlist_file(common_poles, residues_stack, number_of_ports, D)
 
 
 print('\n********************************* Part one (Full synthesis) is done *********************************\n')

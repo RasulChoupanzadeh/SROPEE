@@ -1,7 +1,7 @@
 
 """ Run_passive_MOR.py      => This script is the main program of passive model order reduction (Passive MOR) part of SROPEE. 
 Author: Rasul Choupanzadeh
-Date: 07/03/2022
+Date: 08/14/2022
 
 
 In addition to Load_netlist.py, this code uses general_MNA_builder.py and Block_SAPOR.py (and SOrth.py), which are based on the concepts from [1-2] and [3-4], respectively.
@@ -72,18 +72,9 @@ Coef = 1e12
 freq = freq/Coef
 fmin = freq[0]
 fmax = freq[-1]
-s0 = 2*np.pi*float((fmin+fmax)/2)*Coef  
+#s0 = 2*np.pi*float((fmin+fmax)/2)*Coef  
+s0 = 100*Coef
 
-
-## This section was just for testing a netlist other than the netlist of part 1. Disable this section for using full_netlist.sp of part 1------------
-#def precise_arange(start, stop, step):                             
-    #return step * np.arange(start / step, stop / step)
-#Coef = 1e12                        
-#fmin = 175
-#fmax = 215                                                         #****************************** ATTENTION PLEASE!!!! *****************************
-#fstep = 0.01                                                       #*************** remove this part for using full_netlist.sp of part 1*************
-#freq = precise_arange(fmin, fmax+fstep, fstep) * Coef              # change the name of full_netlist_part1.sp to full_netlist.sp in create_netlist.py
-#s0 = 2*np.pi*194*Coef
 #-----------------------------------------------------------------
 
 
@@ -92,7 +83,7 @@ exec(open("./2_Passive MOR/Load_netlist.py").read())
                                                       
 #-----------------------------------------------------------------General MNA approach for MOR-------------------------------------------------------------------------
 # build general MNA
-[Gm,Cm,Gamma,Lv,Bm,M,N,SEt] = MNA_calculator(Ra,Rb,L,C,Num_branch, Num_port);
+[Gm,Cm,Gamma,Lv,Bm,M,N,SEt] = MNA_calculator(Ra,Rb,L,C,Rd,Num_branch, Num_port);
 p = Bm.shape[1];
 q = Lv.shape[1];
 

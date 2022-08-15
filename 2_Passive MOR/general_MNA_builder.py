@@ -1,8 +1,8 @@
 
-""" general_MNA_builder.py      => This script generates general MNA matrices from the given circuit parameters.
+""" general_MNA_builder.py
 
 Author: Rasul Choupanzadeh
-Date: 07/03/2022
+Date: 08/14/2022
 
 
 This code is based on the concepts from [1-2].
@@ -15,16 +15,20 @@ This code is based on the concepts from [1-2].
 """
 
 
-## Input: Ra, Rb, L, C, Num_branch, Num_port           Output: Gm, Cm, Gamma, Lv, Bm, M, N , SEt
+## Input: Ra, Rb, L, C, Rd, Num_branch, Num_port           Output: Gm, Cm, Gamma, Lv, Bm, M, N , SEt
 
 
 import numpy as np
 
-def MNA_calculator(Ra, Rb, L, C, Num_branch, Num_port):
+def MNA_calculator(Ra, Rb, L, C, Rd, Num_branch, Num_port):
+    if Rd.shape != 0:
+        Num_branch = Num_branch - 1
+        
     N = 2*np.sum(Num_branch) + Num_port;
-    M = np.sum(Num_branch);
+    M = np.sum(Num_branch);       
     Ga = 1/Ra[:];
     Gb = 1/Rb[:];
+    Gd = 1/Rd[:];
     Gm = np.zeros(shape=(N,N));
     for i in range(0,Num_port):
         Gm[i,i] = 1;
@@ -127,6 +131,33 @@ def MNA_calculator(Ra, Rb, L, C, Num_branch, Num_port):
         Cm[i,i] = 0
         Cm[i,i] = -np.sum(Cm[i,:])        
         
+    
+    ## Rd does not add new unknown vlotage, or auxiliary current==> N, and M will not be changed ==> only some values will be added to Gm[0:p,0:p].
+    # Reshape Gd to p*p
+    def create_upper_matrix(values, size):
+        upper = np.zeros((size, size),dtype='complex')
+        upper[np.triu_indices(size, 0)] = values
+        return(upper)
+
+    u = create_upper_matrix(Gd, Num_port).real
+    l = np.triu(u,1).T
+    Gd = u + l    
+    
+    # Calculated additional values Gmd, which shows the related equations between V1,...,Vp
+    Gmd = np.zeros(shape=Gd.shape)
+    for i in range (0,p):
+        for j in range (0,p):
+            if i==j:
+                Gmd[i,j] = np.sum(Gd[i,:])  # or =np.sum(Gd,0) 
+            else:
+                Gmd[i,j] = -Gd[i,j]
+    
+
+    # Modify Gm by adding Gmd 
+    for i in range (0,p):
+        for j in range (0,p):
+            Gm[i,j] = Gm[i,j] + Gmd[i,j]
+             
         
     # To check the symmetry
     #if Gm.any() == Gm.T.any():

@@ -1,10 +1,10 @@
 
-""" create_netlist.py     => This script creates a netlist for a multiport network using the input pole/residues fitted network generated from Run_full_synthesis.py
+""" create_netlist.py     => This script creates a netlist for a multiport network using the input poles, residues, and D matrix of fitted network generated from Run_full_synthesis.py
 
 Author: Rasul Choupanzadeh 
-Date: 07/03/2022
+Date: 08/11/2022
 
-Acknowledgement: This script is a duplication of "create_netlist" program with few 
+Acknowledgement: This script is a duplication of "create_netlist" program with some 
                  modifications and corrections added by author to the original script 
                 (https://github.com/JenniferEHoule/Circuit_Synthesis). All credits go to
                 "Jennifer Houle" for her Python implemented program, and the following papers.
@@ -12,7 +12,8 @@ Acknowledgement: This script is a duplication of "create_netlist" program with f
 Modifications: 
   1. Used numpy.count_nonzero instead of scipy.count_nonzero in "reduce_poles" function in Jennifer's program.  Note: scipy.count_nonzero is deprecated and will be removed in SciPy 2.0.0.
   2. Corrected the Rbbr formula by adding a " - " sign in Rbbr formula in "create_imag_netlist_branch" function. 
-  3. Since Run_full_synthesis.py program uses vector fitting algorithm with non-common poles, and the original program of "create_netlist" is written for vector fitting with common poles, we did some modifications in "create_netlist_file" function.
+  3. Since the shapes of input matrices differ from the input matrices of original program of "create_netlist", we did some modifications in "create_netlist_file" function.
+  4. We added the option input matrx D for more accurate results. 
 
 
 [1]  A. Zadehgol, "A semi-analytic and cellular approach to rational system characterization through
@@ -24,12 +25,12 @@ Modifications:
 [3]  R. Choupanzadeh and A. Zadehgol. Stability, causality, and passivity analysis of canonical equivalent 
      circuits of improper rational transfer functions with real poles and residues. IEEE Access, vol.8, pp. 125149-125162, 2020.
 
-[4]  https://github.com/JenniferEHoule/Circuit_Synthesis
+[4]  Houle, Jennifer, GitHub. May 10, 2020. Accessed on: August 11, 2022, [Online]. https://github.com/JenniferEHoule/Circuit_Synthesis
 
 """
 
 
-## Input: poles, residues, and number_of_ports           Output: full_netlist.sp file
+## Input: poles, residues, number_of_ports, matrix D           Output: full_netlist.sp file
 
 
 import numpy as np
@@ -81,7 +82,7 @@ def create_netlist_branch(pole, residue, port_a, port_b, branch_number, netlist_
 
 
 
-def create_netlist_file(poles, residues, number_of_ports, out_file_path='./Output/full_netlist.sp'):
+def create_netlist_file(poles, residues, number_of_ports, D, out_file_path='./Output/full_netlist.sp'):
     outfile = Path(out_file_path)
     with outfile.open('w') as netlist_file:
         print(f"* netlist generated with vector fitting poles and residues\n", file=netlist_file)
@@ -121,6 +122,18 @@ def create_netlist_file(poles, residues, number_of_ports, out_file_path='./Outpu
                     poles_reduced, residues_reduced = reduce_poles(poles_row, residues_row)
                     for pole_num in range(poles_reduced.shape[1]):
                         create_netlist_branch(poles_reduced[0, pole_num], residues_reduced[0, pole_num], f'node_{port_1}', port_2_name, pole_num, netlist_file)
+                        
+                    ## Added by Rasul Choupanzadeh   
+                    # Add branch for D elements 
+                    if D[port_1-1,port_2-1].real != 0: 
+                        branch_number_D = int(poles.shape[1]/2)
+                        port_a = f'node_{port_1}'
+                        port_b = port_2_name
+                        print(f"* Branch {branch_number_D}", file=netlist_file)
+                        print(f"Rd {port_a} "
+                              f"{port_b} "
+                              f"{1 / (D[port_1-1,port_2-1].real)}\n", file=netlist_file)    
+                        
                     print(f".ends\n\n", file=netlist_file)
                     row = row + 1
         print(f".end", file=netlist_file)

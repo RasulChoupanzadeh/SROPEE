@@ -70,7 +70,7 @@ print('Equivalent reduced netlist is saved as reduced_netlist.sp in output folde
 
 # -----------------------------------Load the simulation results of generated reduced netlist-----------------------------------
 ## If you want to speed up the SROPEE, you can disable this section (i.e., Load the simulation results of generated reduced netlist)
-## This part Loads the pre-generated data for a specific network, therefore, you should generate your own data and replace it with "reduced_voltages.cti".
+## This part Loads the pre-generated data for a specific network with input source at port 1, therefore, you should generate your own data and replace it with "reduced_voltages.cti".
 V_equiv = Load_equiv_circuit_results(n,Q)
 V_ports_equiv = V_equiv[0:p,:]
 

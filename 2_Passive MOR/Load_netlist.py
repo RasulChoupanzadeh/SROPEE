@@ -2,12 +2,12 @@
 """ Load_netlist.py      => This script loads the netlist of original full-order network which is reported as "netlist.sp" file.
 
 Author: Rasul Choupanzadeh
-Date: 07/03/2022
+Date: 08/14/2022
 
 """
 
 
- ## Input: "full_netlist.sp" file          Output: Ra, Rb, L, C, Num_branch, Num_port
+ ## Input: "full_netlist.sp" file          Output: Ra, Rb, L, C, Rd, Num_branch, Num_port
  
 
 import numpy as np
@@ -24,7 +24,7 @@ for i in range(len(netlist)):
         Num_port = int(netlist[i][2])
     if netlist[i][0:4]=='.sub':
         sbck_ident.append(i)        
-del sbck_ident[0]                       ## to delete a row from list==> del matrix[i,:] ,  to delete a row from a numpy array==> np.delete(array name, row/column number, axis=0/1 for row/column)
+del sbck_ident[0]                       ## to delete a row from list==> del matrix[i,:]          to delete a row from a numpy array==> np.delete(array name, row/column number, axis=0/1 for row/column)
 sbck_ident.append(len(netlist))
 
 
@@ -40,6 +40,7 @@ Ra = [];
 L = []; 
 Rb = []; 
 C = []; 
+Rd = [];
 for i in range(0,len(netlist)):
     if netlist[i][0:2]=='Ra':
         sentence = netlist[i];
@@ -75,7 +76,16 @@ for i in range(0,len(netlist)):
                 c = float(t)
             except ValueError:
                 pass
-        C.append(float(c))              
+        C.append(float(c))  
+        
+    if netlist[i][0:2]=='Rd':
+        sentence = netlist[i];
+        for t in sentence.split():
+            try:
+                R = float(t)
+            except ValueError:
+                pass
+        Rd.append(float(R))    
 
 
 Num_branch = np.array(Num_branch);
@@ -83,3 +93,4 @@ Ra = np.array(Ra);
 Rb = np.array(Rb);
 L = np.array(L);
 C = np.array(C);
+Rd = np.array(Rd);
