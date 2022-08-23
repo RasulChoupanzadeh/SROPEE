@@ -70,6 +70,7 @@ This program is a part of SROPEE algorithm, and will be executed auromatically b
 - **VF_relax:** Enables/disables relaxed vector fitting
 - **VF_stable:** Enables/disables enforcing stability of fitted poles in vector fitting algorithm
 - **VF_asymp:** Fitting model options (fit with None, fit with D, fit with D and E)
+- **Passivity_Enforcement_Enable:** Enables/disables passivity assessment/enforcement
 - **SMP_iter_upper_limit:** Passivity enforcement iteration upper limit
 - **input_variables.npy:** This file contains above inputs, and is used here to load the mentioned inputs (note: this file is located in the folder: .\SROPEE\Output)
 

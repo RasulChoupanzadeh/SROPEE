@@ -66,6 +66,7 @@ To see the fully detailed instructions, please see the Instructions.pdf file.
 - **VF_relax:** Enables/disables relaxed vector fitting in Full synthesis part of SROPEE.
 - **VF_stable:** Enables/disables enforcing stability of fitted poles in Full synthesis part of SROPEE.
 - **VF_asymp:** Fitting model options (fit with None, fit with D, fit with D and E) in Full synthesis part of SROPEE.
+- **Passivity_Enforcement_Enable:** Enables/disables passivity assessment/enforcement in Full synthesis part of SROPEE.
 - **SMP_iter_upper_limit:** Passivity enforcement iteration upper limit in Full synthesis part of SROPEE.
 - **n:** The order of reducion for Bloack SAPOR algorithm in Passive MOR part of SROPEE.
 - **in_port:** Port of input source for reverse MNA algorithm in Reduced synthesis part of SROPEE.

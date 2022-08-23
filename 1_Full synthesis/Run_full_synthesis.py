@@ -157,7 +157,8 @@ weight_column_sum = np.load('./Output/input_variables.npy')[5]
 VF_relax = eval(np.load('./Output/input_variables.npy')[6])
 VF_stable = eval(np.load('./Output/input_variables.npy')[7])
 VF_asymp = int(np.load('./Output/input_variables.npy')[8])
-SMP_iter_upper_limit = int(np.load('./Output/input_variables.npy')[9])
+Passivity_Enforcement_Enable = eval(np.load('./Output/input_variables.npy')[9])
+SMP_iter_upper_limit = int(np.load('./Output/input_variables.npy')[10])
 
 
 
@@ -404,66 +405,6 @@ for m in range(1,p+1):
 print('\n')
     
 #----------------------------------------------------------------Passivity assessment/enforcement-------------------------------------------------------- 
-# Plot eigenvalues before passivity enforcement    
-prev_SER = SER.copy()
-ylim1 = None
-ylim2 = None
-plot(plot_name='Original', s_pass=s.T, ylim=np.array((ylim1, ylim2)), labels=['Original'], SER1=prev_SER)
-
-
-# Passivity Enforcement
-smp = SMP(plot=False)
-SMP_SER = smp.SMP_driver(SER, Niter=SMP_iter_upper_limit, s_pass=s.T)
-
-plot(plot_name='Orig Vs. SMP', s_pass=s.T, ylim=np.array((ylim1, ylim2)), labels=['Original', 'SMP Perturbed'], SER1=prev_SER, SER2=SMP_SER)
-
-A = SMP_SER['A']
-B = SMP_SER['B']
-C = SMP_SER['C']
-D = SMP_SER['D'].real
-E = SMP_SER['E'].real
-
-poles = SMP_SER['poles']
-residues = SMP_SER['C']
-N = poles.shape[0]
-N_port = int(residues.shape[1] / N)
-poles = poles.reshape((1, -1))
-residues = residues.reshape((N_port  ** 2, N))
-
-R = residues.reshape((N_port, N_port, N))
-residues_stack = np.zeros(shape=(Num_subckt, N), dtype='complex')
-D_stack = np.zeros(Num_subckt)
-E_stack = np.zeros(Num_subckt)
-nt = 0
-for i in range(0,p):
-    for j in range(i,p):
-            residues_stack[nt,:] = R[i,j,:]
-            D_stack[nt] = D[i,j]
-            E_stack[nt] = E[i,j]
-            nt = nt+1
-
-
-Y_passive_fit = np.zeros(shape=(Ns,p,p), dtype='complex')  
-nt =0
-for s0 in s:
-    A_inv = np.linalg.inv(s0*np.eye(len(A))-A)
-    Y_passive_fit[nt,:,:] = C @ A_inv @ B + D
-    nt = nt+1
-
-# convert from y' to y
-for fre in range(Ns):
-    for i in range(p):
-        Y_passive_fit[fre,i,i] = np.sum(Y_passive_fit[fre,i,:])
-                
-    for i in range(p):
-        for j in range(p):
-            if i != j:
-                Y_passive_fit[fre,i,j] = -Y_passive_fit[fre,i,j]
-
-
-S_passive_fit = scattering_from_admittance(Y_passive_fit, z0)
-Z_passive_fit = np.linalg.inv(Y_passive_fit)
-
 def compare_passivefitted_vs_actual(m, n):
     mn = m*10+n
     # Compare Z-parameters
@@ -536,14 +477,103 @@ def compare_passivefitted_vs_actual(m, n):
     ax2.legend(loc='upper right')
     fig.suptitle(f"S%d" %mn)
     save_fig_SMP(f"S%d" %mn)
-        
+    
+    
+if Passivity_Enforcement_Enable == True:
+    # Plot eigenvalues before passivity enforcement    
+    prev_SER = SER.copy()
+    ylim1 = None
+    ylim2 = None
+    plot(plot_name='Original', s_pass=s.T, ylim=np.array((ylim1, ylim2)), labels=['Original'], SER1=prev_SER)
+    
+    # Passivity Enforcement
+    smp = SMP(plot=False)
+    SMP_SER = smp.SMP_driver(SER, Niter=SMP_iter_upper_limit, s_pass=s.T)
+    
+    plot(plot_name='Orig Vs. SMP', s_pass=s.T, ylim=np.array((ylim1, ylim2)), labels=['Original', 'SMP Perturbed'], SER1=prev_SER, SER2=SMP_SER)
+    
+    A = SMP_SER['A']
+    B = SMP_SER['B']
+    C = SMP_SER['C']
+    D = SMP_SER['D'].real
+    E = SMP_SER['E'].real
+    
+    poles = SMP_SER['poles']
+    residues = SMP_SER['C']
+    N = poles.shape[0]
+    N_port = int(residues.shape[1] / N)
+    poles = poles.reshape((1, -1))
+    residues = residues.reshape((N_port  ** 2, N))
+    
+    R = residues.reshape((N_port, N_port, N))
+    residues_stack = np.zeros(shape=(Num_subckt, N), dtype='complex')
+    D_stack = np.zeros(Num_subckt)
+    E_stack = np.zeros(Num_subckt)
+    nt = 0
+    for i in range(0,p):
+        for j in range(i,p):
+                residues_stack[nt,:] = R[i,j,:]
+                D_stack[nt] = D[i,j]
+                E_stack[nt] = E[i,j]
+                nt = nt+1
+    
+    
+    Y_passive_fit = np.zeros(shape=(Ns,p,p), dtype='complex')  
+    nt =0
+    for s0 in s:
+        A_inv = np.linalg.inv(s0*np.eye(len(A))-A)
+        Y_passive_fit[nt,:,:] = C @ A_inv @ B + D
+        nt = nt+1
+    
+    # convert from y' to y
+    for fre in range(Ns):
+        for i in range(p):
+            Y_passive_fit[fre,i,i] = np.sum(Y_passive_fit[fre,i,:])
+                    
+        for i in range(p):
+            for j in range(p):
+                if i != j:
+                    Y_passive_fit[fre,i,j] = -Y_passive_fit[fre,i,j]
+    
+    
+    S_passive_fit = scattering_from_admittance(Y_passive_fit, z0)
+    Z_passive_fit = np.linalg.inv(Y_passive_fit)
+    
 
-# Comparison plots 
-for m in range(1,p+1):
-    for n in range(m,p+1):
-        compare_passivefitted_vs_actual(m,n)
-        plt.close('all')
-
+    # Comparison plots 
+    for m in range(1,p+1):
+        for n in range(m,p+1):
+            compare_passivefitted_vs_actual(m,n)
+            plt.close('all')
+            
+else:
+    print('\n Passivity enforcement is disabled \n')
+    
+    A = SER['A']
+    B = SER['B']
+    C = SER['C']
+    D = SER['D'].real
+    E = SER['E'].real
+    
+    poles = SER['poles']
+    residues = SER['C']
+    N = poles.shape[0]
+    N_port = int(residues.shape[1] / N)
+    poles = poles.reshape((1, -1))
+    residues = residues.reshape((N_port  ** 2, N))
+    
+    R = residues.reshape((N_port, N_port, N))
+    residues_stack = np.zeros(shape=(Num_subckt, N), dtype='complex')
+    D_stack = np.zeros(Num_subckt)
+    E_stack = np.zeros(Num_subckt)
+    nt = 0
+    for i in range(0,p):
+        for j in range(i,p):
+                residues_stack[nt,:] = R[i,j,:]
+                D_stack[nt] = D[i,j]
+                E_stack[nt] = E[i,j]
+                nt = nt+1    
+    
 #-----------------------------------------------------------------------Generate netlist------------------------------------------------------------------ 
 print('\nGenerating Netlist:')
 common_poles = np.zeros(shape=(Num_subckt, N), dtype='complex')

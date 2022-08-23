@@ -61,7 +61,7 @@ def save_fig(fig_id, tight_layout=True, fig_extension="pdf", resolution=300):
         
 #----------------------------------------------------------------------Input parameters-----------------------------------------------------------------------------------
 Input_file_name = np.load('./Output/input_variables.npy')[0]
-n = int(np.load('./Output/input_variables.npy')[10])
+n = int(np.load('./Output/input_variables.npy')[11])
 
 print('\n********************************** Starting part two (Passive MOR) **********************************\n')
 

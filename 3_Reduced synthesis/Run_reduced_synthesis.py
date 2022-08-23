@@ -45,7 +45,7 @@ def save_fig(fig_id, tight_layout=True, fig_extension="pdf", resolution=300):
 
 
 # -------------------------------------------------Load the reduced Matrices and data-------------------------------------------
-in_port = int(np.load('./Output/input_variables.npy')[11])               
+in_port = int(np.load('./Output/input_variables.npy')[12])               
  
 
 print('\n****************************** Starting part three (Reduced synthesis) ******************************\n')

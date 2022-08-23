@@ -29,15 +29,16 @@ Input_file_name = 'THz_S_param.s4p'
 ################################################
 Num_poles = 50
 
-VF_iter1 = 4                    # Iteration number for calculating improved initial poles by fitting column sum in vector fitting algorithm
-VF_iter2 = 10                   # Iteration number for calculating poles and residues in vector fitting algorithm
-weight_f = 'sqrt_abs'           # Choose between 'unweighted', 'abs', and 'sqrt_abs' weight types for f                      Note: 'abs' is strongest inverse wieght
-weight_column_sum = 'norm'      # Choose between 'unweighted', 'norm', and 'sqrt_norm' weight types for g (column sum)       Note: 'norm' is strongest inverse wieght
-VF_relax = True                 # Enable/disable relaxed vector fitting
-VF_stable = True                # Enable/disable enforce stablility of fitted poles
-VF_asymp = 1                     # Fitting model (asymp=0  fits with None, asymp=1  fits with D, asymp=2  fits with D and E)
+VF_iter1 = 4                            # Iteration number for calculating improved initial poles by fitting column sum in vector fitting algorithm
+VF_iter2 = 10                           # Iteration number for calculating poles and residues in vector fitting algorithm
+weight_f = 'sqrt_abs'                   # Choose between 'unweighted', 'abs', and 'sqrt_abs' weight types for f                      Note: 'abs' is strongest inverse wieght
+weight_column_sum = 'norm'              # Choose between 'unweighted', 'norm', and 'sqrt_norm' weight types for g (column sum)       Note: 'norm' is strongest inverse wieght
+VF_relax = True                         # Enable/disable relaxed vector fitting
+VF_stable = True                        # Enable/disable enforce stablility of fitted poles
+VF_asymp = 1                            # Fitting model (asymp=0  fits with None, asymp=1  fits with D, asymp=2  fits with D and E)
 
-SMP_iter_upper_limit = 10       # Passivity enforcement iteration upper limit
+Passivity_Enforcement_Enable = True     # Enable/disable passivity assessment/enforcement 
+SMP_iter_upper_limit = 10               # Passivity enforcement iteration upper limit
 
 ################################################
 # Passive MOR input
@@ -55,7 +56,7 @@ in_port = 1                     # port of input source 1,2,...,p
 
 # Saving all input variables into .npy file
 path = os.path.join(Output_PATH, 'input_variables.npy')
-np.save(path, [Input_file_name, Num_poles, VF_iter1, VF_iter2, weight_f, weight_column_sum, VF_relax, VF_stable, VF_asymp, SMP_iter_upper_limit, n, in_port])
+np.save(path, [Input_file_name, Num_poles, VF_iter1, VF_iter2, weight_f, weight_column_sum, VF_relax, VF_stable, VF_asymp, Passivity_Enforcement_Enable, SMP_iter_upper_limit, n, in_port])
 
 
 #--------------------------------------------------------------Run Automated SROPEE algorithm------------------------------------------------------
