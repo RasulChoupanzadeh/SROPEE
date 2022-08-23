@@ -3,6 +3,9 @@
 Author: Rasul Choupanzadeh
 Date: 08/14/2022
 
+# Acknowledgement
+This project is completed as part of research conducted with my major professor and advisor, Prof. Ata Zadehgol, in the Applied Computational Electromagnetics and Signal/Power Integrity (ACEM-SPI) Lab while working toward the Ph.D. in Electrical Engineering at the University of Idaho, Moscow, Idaho, USA. 
+This project was supported by a research grant from the National Science Foundation, under the NSF Award #1816542 [6].
 
 In addition to Load_netlist.py, this code uses general_MNA_builder.py and Block_SAPOR.py (and SOrth.py), which are based on the concepts from [1-2] and [3-4], respectively.
 
@@ -20,6 +23,8 @@ In addition to Load_netlist.py, this code uses general_MNA_builder.py and Block_
     RCS interconnect circuits. In Proceedings of Asia and South Pacific Design Automation Conference (ASP-DAC), pp. 244-249, 2005.
     
 [5] http://scikit-rf.org
+
+[6] A. Zadehgol, "SHF: SMALL: A Novel Algorithm for Automated Synthesis of Passive, Causal, and Stable Models for Optical Interconnects", National Science Foundation, Award #1816542. Jun. 22, 2018.
 
 """
 
@@ -56,7 +61,7 @@ def save_fig(fig_id, tight_layout=True, fig_extension="pdf", resolution=300):
         
 #----------------------------------------------------------------------Input parameters-----------------------------------------------------------------------------------
 Input_file_name = np.load('./Output/input_variables.npy')[0]
-n = int(np.load('./Output/input_variables.npy')[2])
+n = int(np.load('./Output/input_variables.npy')[10])
 
 print('\n********************************** Starting part two (Passive MOR) **********************************\n')
 

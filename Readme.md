@@ -1,6 +1,6 @@
 # S-parameter to Reduced-Order Passivity-Enforced Equivalent Circuit (SROPEE)
 ### Author: Rasul Choupanzadeh
-### Date: 08/15/2022
+### Date: 08/23/2022
 
 # Acknowledgement
 This project is completed as part of research conducted with my major professor and advisor, Prof. Ata Zadehgol, in the Applied Computational Electromagnetics and Signal/Power Integrity (ACEM-SPI) Lab while working toward the Ph.D. in Electrical Engineering at the University of Idaho, Moscow, Idaho, USA. 
@@ -59,6 +59,14 @@ To see the fully detailed instructions, please see the Instructions.pdf file.
 - **THz_S_param.s4p:** A demo input file containing frequency responses of a 4-port network working in THz frequency range, which may be replaced by another touchstone file of interest.
 - **Input_file_name:** The full name of input file including the file extention.
 - **Num_poles:** The desired number of poles for vector fitting algorithm (i.e., vector fitting approximation order) in Full synthesis part of SROPEE.
+- **VF_iter1:** Iteration number for calculating improved initial poles by fitting column sum through vector fitting algorithm in Full synthesis part of SROPEE.
+- **VF_iter2:** Iteration number for calculating poles and residues through vector fitting algorithm in Full synthesis part of SROPEE.
+- **weight_f:** Weighting type for vector fitting of function (f) in Full synthesis part of SROPEE.
+- **weight_column_sum:** Weighting type for fitting of column sum in Full synthesis part of SROPEE.
+- **VF_relax:** Enables/disables relaxed vector fitting in Full synthesis part of SROPEE.
+- **VF_stable:** Enables/disables enforcing stability of fitted poles in Full synthesis part of SROPEE.
+- **VF_asymp:** Fitting model options (fit with None, fit with D, fit with D and E) in Full synthesis part of SROPEE.
+- **SMP_iter_upper_limit:** Passivity enforcement iteration upper limit in Full synthesis part of SROPEE.
 - **n:** The order of reducion for Bloack SAPOR algorithm in Passive MOR part of SROPEE.
 - **in_port:** Port of input source for reverse MNA algorithm in Reduced synthesis part of SROPEE.
 **Note:** The first input is located in folder: .\SROPEE\Input, and the remaining inputs are exported as input_variables.npy file in folder:. \SROPEE\Output.  
@@ -66,7 +74,7 @@ To see the fully detailed instructions, please see the Instructions.pdf file.
 
 
 ## Outputs:
-- **input_variables.npy:** Input variables exported from SROPEE main program file (run_main.py) and defined by user. This file is used for transferring the user's input variables to various parts of SROPEE algorithm.
+- **input_variables.npy:** Input variables exported from SROPEE main program file (run_main.py) and defined by user. This file is used for transferring the user's input variables to different parts of SROPEE algorithm.
 - **full_netlist.sp:** Equivalent full-order netlist file exported from Full synthesis part of SROPEE.
 - **reduced_MNA_data.npz:** Reduced-order MNA matricres and data file exported from Passive MOR part of SROPEE.
 - **reduced_netlist.sp:** Equivalent reduced-order netlist file exported from Reduced synthesis part of SROPEE.
@@ -102,8 +110,7 @@ Libraries used in Python:
      
 [6] Simon De Ridder, GitHub. Feb 08, 2019. Accessed on: August 10, 2022, [Online].https://github.com/SimonDeRidder/pyVF
 
-[7] E. Medina, A. Ramirez, J. Morales and K. Sheshyekani, "Passivity Enforcement of FDNEs via Perturbation of Singularity Test Matrix," in IEEE Transactions on Power Delivery,
-    vol. 35, no. 4, pp. 1648-1655, Aug. 2020, doi: 10.1109/TPWRD.2019.2949216.
+[7] E. Medina, A. Ramirez, J. Morales and K. Sheshyekani, "Passivity Enforcement of FDNEs via Perturbation of Singularity Test Matrix," in IEEE Transactions on Power Delivery, vol. 35, no. 4, pp. 1648-1655, Aug. 2020, doi: 10.1109/TPWRD.2019.2949216.
 
 [8] Totorica, Nathan, GitHub, May 5, 2021. Accessed on: August 10, 2022, [Online]. Available:https://github.com/ntotorica/SMP_Passivity_Enforcement
 

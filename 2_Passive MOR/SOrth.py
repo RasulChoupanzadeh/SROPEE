@@ -4,6 +4,9 @@
 Author: Rasul Choupanzadeh
 Date: 07/03/2022
 
+# Acknowledgement
+This project is completed as part of research conducted with my major professor and advisor, Prof. Ata Zadehgol, in the Applied Computational Electromagnetics and Signal/Power Integrity (ACEM-SPI) Lab while working toward the Ph.D. in Electrical Engineering at the University of Idaho, Moscow, Idaho, USA. 
+This project was supported by a research grant from the National Science Foundation, under the NSF Award #1816542 [3].
 
 This code is based on the concepts from [1-2].
 
@@ -14,6 +17,8 @@ This code is based on the concepts from [1-2].
 [2] Bang Liu, Xuan Zeng, Yangfeng Su, Jun Tao, Zhaojun Bai, C. Chiang, and Dian Zhou.
     Block SAPOR: block second-order arnoldi method for passive order reduction of multi-input multi-output 
     RCS interconnect circuits. In Proceedings of Asia and South Pacific Design Automation Conference (ASP-DAC), pages 244_249, 2005.
+    
+[3] A. Zadehgol, "SHF: SMALL: A Novel Algorithm for Automated Synthesis of Passive, Causal, and Stable Models for Optical Interconnects", National Science Foundation, Award #1816542. Jun. 22, 2018.
     
 """
 

@@ -1,6 +1,6 @@
 # Full-order synthesis part of SROPEE algorithm
 ### Author: Rasul Choupanzadeh
-### Date: 08/15/2022
+### Date: 08/23/2022
 
 # Acknowledgement
 This project is completed as part of research conducted with my major professor and advisor, Prof. Ata Zadehgol, in the Applied Computational Electromagnetics and Signal/Power Integrity (ACEM-SPI) Lab while working toward the Ph.D. in Electrical Engineering at the University of Idaho, Moscow, Idaho, USA. 
@@ -62,8 +62,16 @@ This program is a part of SROPEE algorithm, and will be executed auromatically b
 
 ## Inputs:
 - **THz_S_param.s4p:** A demo input of optical interconnects frequency response. This file is located in the input folder of SROPEE, and may be replaced by another touchstone file of interest.
-- **Num_poles:** A scalar value for number of fitting poles
-- **input_variables.npy:** This file contains input variables, and is used here to load the input file name and Num_poles (note: this file is located in the folder: .\SROPEE\Output)
+- **Num_poles:** Number of fitting poles (approximation order in vector fitting)
+- **VF_iter1:** Iteration number for calculating improved initial poles by fitting column sum in vector fitting algorithm
+- **VF_iter2:** Iteration number for calculating poles and residues in vector fitting algorithm
+- **weight_f:** Weighting type for vector fitting of function (f)
+- **weight_column_sum:** Weighting type for fitting of column sum
+- **VF_relax:** Enables/disables relaxed vector fitting
+- **VF_stable:** Enables/disables enforcing stability of fitted poles in vector fitting algorithm
+- **VF_asymp:** Fitting model options (fit with None, fit with D, fit with D and E)
+- **SMP_iter_upper_limit:** Passivity enforcement iteration upper limit
+- **input_variables.npy:** This file contains above inputs, and is used here to load the mentioned inputs (note: this file is located in the folder: .\SROPEE\Output)
 
     
 ## Outputs:
@@ -108,7 +116,7 @@ Libraries used in Python:
 ```
 [1] A. Zadehgol, "SHF: SMALL: A Novel Algorithm for Automated Synthesis of Passive, Causal, and Stable Models for Optical Interconnects", National Science Foundation, Award #1816542. Jun. 22, 2018.
 
-[2] https://github.com/bmguiana/OIDT/tree/main/CEM/GPU/FDTD_3D/s-parameter_extraction/Results
+[2] Guiana, Brian, GitHub. May 14, 2021. Available:https://github.com/bmguiana/OIDT
 
 [3] B. Gustavsen and A. Semlyen, "Rational approximation of frequency domain responses by Vector Fitting", IEEE Trans. Power Delivery, vol. 14, no. 3, pp. 1052-1061, July 1999.
 
@@ -118,11 +126,9 @@ Libraries used in Python:
      
 [6] Simon De Ridder, GitHub. Feb 08, 2019. Accessed on: August 10, 2022, [Online].https://github.com/SimonDeRidder/pyVF
 
-[7] E. Medina, A. Ramirez, J. Morales and K. Sheshyekani, "Passivity Enforcement of FDNEs via Perturbation of Singularity Test Matrix," in IEEE Transactions on Power Delivery,
-    vol. 35, no. 4, pp. 1648-1655, Aug. 2020, doi: 10.1109/TPWRD.2019.2949216.
+[7] E. Medina, A. Ramirez, J. Morales and K. Sheshyekani, "Passivity Enforcement of FDNEs via Perturbation of Singularity Test Matrix," in IEEE Transactions on Power Delivery, vol. 35, no. 4, pp. 1648-1655, Aug. 2020, doi: 10.1109/TPWRD.2019.2949216.
 
 [8] Totorica, Nathan, GitHub, May 5, 2021. Accessed on: August 10, 2022, [Online]. Available:https://github.com/ntotorica/SMP_Passivity_Enforcement
-
 
 [9] A. Zadehgol, "A semi-analytic and cellular approach to rational system characterization through equivalent circuits", Wiley IJNM, 2015. [Online]. https://doi.org/10.1002/jnm.2119
 
@@ -132,9 +138,7 @@ Libraries used in Python:
 
 [12] Houle, Jennifer, GitHub. May 10, 2020. Accessed on: February 3, 2021, [Online]. Available: https://github.com/jenniferEhoule/circuit_synthesis
 
-
 [13] http://scikit-rf.org
-
 
 ```
 

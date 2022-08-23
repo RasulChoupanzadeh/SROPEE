@@ -11,6 +11,9 @@
 Author: Rasul Choupanzadeh 
 Date: 08/10/2022
 
+# Acknowledgement
+This project is completed as part of research conducted with my major professor and advisor, Prof. Ata Zadehgol, in the Applied Computational Electromagnetics and Signal/Power Integrity (ACEM-SPI) Lab while working toward the Ph.D. in Electrical Engineering at the University of Idaho, Moscow, Idaho, USA. 
+This project was supported by a research grant from the National Science Foundation, under the NSF Award #1816542 [12].
 
 This program uses vectfit3.py and create_netlist.py program files, which are based on the concepts from [1-11].
 
@@ -47,12 +50,14 @@ This program uses vectfit3.py and create_netlist.py program files, which are bas
 
  
  [11] http://scikit-rf.org
+ 
+ [12] A. Zadehgol, "SHF: SMALL: A Novel Algorithm for Automated Synthesis of Passive, Causal, and Stable Models for Optical Interconnects", National Science Foundation, Award #1816542. Jun. 22, 2018.
 
 
 """
 
 
-## Input: Input_file_name and Num_pole_pairs from input_variables.npy           Output: poles, residues, "full_netlist.sp" file, RMSE of fitted and actual network, comparison figures (network parameters) of actual and fitted network
+## Input: Input_file_name, Num_poles, and options from input_variables.npy           Output: poles, residues, "full_netlist.sp" file, RMSE of fitted and actual network, comparison figures (network parameters) of actual and fitted network
 
 import os
 
@@ -145,6 +150,15 @@ def save_fig_SMP(fig_id, tight_layout=True, fig_extension="pdf", resolution=300)
 #---------------------------------------------------------Load the origianl network results and enforce reciprocity--------------------------------------------------- 
 Input_file_name = np.load('./Output/input_variables.npy')[0]
 Num_poles = int(np.load('./Output/input_variables.npy')[1])
+VF_iter1 = int(np.load('./Output/input_variables.npy')[2])
+VF_iter2 = int(np.load('./Output/input_variables.npy')[3])
+weight_f = np.load('./Output/input_variables.npy')[4]
+weight_column_sum = np.load('./Output/input_variables.npy')[5]
+VF_relax = eval(np.load('./Output/input_variables.npy')[6])
+VF_stable = eval(np.load('./Output/input_variables.npy')[7])
+VF_asymp = int(np.load('./Output/input_variables.npy')[8])
+SMP_iter_upper_limit = int(np.load('./Output/input_variables.npy')[9])
+
 
 
 print('\n********************************* Starting part one (Full synthesis) *********************************\n')
@@ -195,19 +209,19 @@ N = Num_poles                               # order of approximation
 Ns = len(freq)
 Nc = Num_subckt
 
-Niter1 = 4                                 # Fitting column sum: n.o. iterations
-Niter2 = 10                                # Fitting column: n.o. iterations
+Niter1 = VF_iter1                          # Fitting column sum: n.o. iterations
+Niter2 = VF_iter2                          # Fitting column: n.o. iterations
 
-weight_f = 'sqrt_abs'                      # Choose between 'unweighted', 'abs', and 'sqrt_abs' weight types for f                            Note: 'abs' is stronger inverse wieght in comparison with 'sqrt_abs'
-weight_column_sum = 'norm'                 # Choose between 'unweighted', 'norm', and 'sqrt_norm' weight types for g (column sum)             Note: 'norm' is stronger inverse wieght in comparison with 'sqrt_norm'
+#weight_f = 'sqrt_abs'                     # Choose between 'unweighted', 'abs', and 'sqrt_abs' weight types for f                            Note: 'abs' is stronger inverse wieght in comparison with 'sqrt_abs'
+#weight_column_sum = 'norm'                # Choose between 'unweighted', 'norm', and 'sqrt_norm' weight types for g (column sum)             Note: 'norm' is stronger inverse wieght in comparison with 'sqrt_norm'
 
 print('Vector Fitting: \n')
 
 # Fitting options
 opts = {}
-opts['relax']     = True  # Use vector fitting with relaxed non-triviality constraint
-opts['stable']    = True  # Enforce stable poles
-opts['asymp']     = 1     # Fitting includes D  (asymp=0  fits with None, asymp=1  fits with D, asymp=2  fits with D and E)
+opts['relax']     = VF_relax    # Use vector fitting with relaxed non-triviality constraint
+opts['stable']    = VF_stable   # Enforce stable poles
+opts['asymp']     = VF_asymp    # Fitting includes D  (asymp=0  fits with None, asymp=1  fits with D, asymp=2  fits with D and E)
 opts['spy1']      = False
 opts['spy2']      = False
 opts['logx']      = False
@@ -216,7 +230,7 @@ opts['errplot']   = False
 opts['phaseplot'] = False
 opts['skip_pole'] = False
 opts['skip_res']  = True
-opts['cmplx_ss']  = True  # Will generate state space model with diagonal A
+opts['cmplx_ss']  = True        # Will generate state space model with diagonal A
 opts['legend']    = False
 
 
@@ -399,7 +413,7 @@ plot(plot_name='Original', s_pass=s.T, ylim=np.array((ylim1, ylim2)), labels=['O
 
 # Passivity Enforcement
 smp = SMP(plot=False)
-SMP_SER = smp.SMP_driver(SER, Niter=10, s_pass=s.T)
+SMP_SER = smp.SMP_driver(SER, Niter=SMP_iter_upper_limit, s_pass=s.T)
 
 plot(plot_name='Orig Vs. SMP', s_pass=s.T, ylim=np.array((ylim1, ylim2)), labels=['Original', 'SMP Perturbed'], SER1=prev_SER, SER2=SMP_SER)
 

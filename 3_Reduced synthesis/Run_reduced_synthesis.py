@@ -4,6 +4,11 @@
 Author: Rasul Choupanzadeh
 Date: 07/03/2022
 
+# Acknowledgement
+This project is completed as part of research conducted with my major professor and advisor, Prof. Ata Zadehgol, in the Applied Computational Electromagnetics and Signal/Power Integrity (ACEM-SPI) Lab while working toward the Ph.D. in Electrical Engineering at the University of Idaho, Moscow, Idaho, USA. 
+This project was supported by a research grant from the National Science Foundation, under the NSF Award #1816542 [1].
+[1] A. Zadehgol, "SHF: SMALL: A Novel Algorithm for Automated Synthesis of Passive, Causal, and Stable Models for Optical Interconnects", National Science Foundation, Award #1816542. Jun. 22, 2018.
+
 """
 
 
@@ -40,7 +45,7 @@ def save_fig(fig_id, tight_layout=True, fig_extension="pdf", resolution=300):
 
 
 # -------------------------------------------------Load the reduced Matrices and data-------------------------------------------
-in_port = int(np.load('./Output/input_variables.npy')[3])               
+in_port = int(np.load('./Output/input_variables.npy')[11])               
  
 
 print('\n****************************** Starting part three (Reduced synthesis) ******************************\n')

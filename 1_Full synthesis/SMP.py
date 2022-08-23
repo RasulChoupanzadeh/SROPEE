@@ -114,8 +114,8 @@ class SMP(object):
         if np.sum(LA.eig(D) == 0):
             Ahat = LA.solve(A, np.eye(N))
             Bhat = - Ahat @ B
-            Chat = C * Ahat                                                          ## Where did you get this? Ahat = A^-1,  Bhat = -A^-1 * B,  Chat = C*A^-1, D^-1 = Dhat= D-C*A^-1*B
-            Dhat = D - C * Ahat * B
+            Chat = C * Ahat                                                          
+            Dhat = D - C * Ahat * B                                                  
             A = Ahat.copy()
             B = Bhat.copy()
             C = Chat.copy()
