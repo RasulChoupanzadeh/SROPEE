@@ -6,7 +6,7 @@
 This project is completed as part of research conducted with my major professor and advisor, Prof. Ata Zadehgol, as part of the Applied Computational Electromagnetics and Signal/Power Integrity (ACEM-SPI) Lab while working toward the Ph.D. in Electrical Engineering at the University of Idaho, Moscow, Idaho, USA. This project was supported by a research grant from the National Science Foundation, under the NSF Award #1816542 [1]. For the convenience of readers, the codes are written in both Python and MATLAB software.
 
 # Overview
-- There is a code that implements the MNA (Modified Nodal Analysis) approach descibed in [2-3], and constructs the MNA matrices due to the given SPICE netlist of multiport networks including canoniacal Ra-L-Rb-C and/or R-L circuit branches [4-5].
+- There is a code that implements the MNA (Modified Nodal Analysis) approach described in [2-3], and constructs the MNA matrices due to the given SPICE netlist of multiport networks including canoniacal Ra-L-Rb-C and/or R-L circuit branches [4-5].
 
 - It performs the MNA algorithm based on two proposed approaches:
     * **Piece-by-Piece MNA approach:** Divides the multiport network into smaller pieces (sub-circuits), then, performs MNA algorithm on each piece to obtain the Piece-by-Piece MNA system.
